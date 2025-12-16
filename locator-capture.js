@@ -207,4 +207,23 @@
     }
   };
 
+
+  function xpathLiteral(value) {
+  if (value.indexOf("'") === -1) {
+    return "'" + value + "'";
+  }
+
+  if (value.indexOf('"') === -1) {
+    return '"' + value + '"';
+  }
+
+  // Contains both ' and " → use concat()
+  const parts = value.split("'");
+  return "concat(" +
+    parts.map((part, i) =>
+      "'" + part + "'" + (i < parts.length - 1 ? ", \"'\", " : "")
+    ).join("") +
+    ")";
+}
+  
 })();
