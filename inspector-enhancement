@@ -1,0 +1,94 @@
+// add feature to show tag name of th eleemnt hovered
+
+//update capture-locator.js with 
+
+----------------------
+let hoverLabel = null;
+
+function createHoverLabel() {
+  if (hoverLabel) return;
+
+  hoverLabel = document.createElement("div");
+  hoverLabel.style.position = "fixed";
+  hoverLabel.style.zIndex = "999999";
+  hoverLabel.style.background = "#d32f2f";
+  hoverLabel.style.color = "#fff";
+  hoverLabel.style.padding = "2px 6px";
+  hoverLabel.style.fontSize = "12px";
+  hoverLabel.style.fontFamily = "monospace";
+  hoverLabel.style.borderRadius = "4px";
+  hoverLabel.style.pointerEvents = "none";
+  hoverLabel.style.display = "none";
+
+  document.body.appendChild(hoverLabel);
+}
+-----------------------
+let hoverLabel = null;
+
+function createHoverLabel() {
+  if (hoverLabel) return;
+
+  hoverLabel = document.createElement("div");
+  hoverLabel.style.position = "fixed";
+  hoverLabel.style.zIndex = "999999";
+  hoverLabel.style.background = "#d32f2f";
+  hoverLabel.style.color = "#fff";
+  hoverLabel.style.padding = "2px 6px";
+  hoverLabel.style.fontSize = "12px";
+  hoverLabel.style.fontFamily = "monospace";
+  hoverLabel.style.borderRadius = "4px";
+  hoverLabel.style.pointerEvents = "none";
+  hoverLabel.style.display = "none";
+
+  document.body.appendChild(hoverLabel);
+}
+
+---------------------------
+window.__itafMouseOver = function (e) {
+  if (!window.__itafCaptureEnabled) return;
+
+  createHoverLabel();
+
+  // Remove previous outline
+  if (lastHighlighted) {
+    lastHighlighted.style.outline = "";
+  }
+
+  const el = e.target;
+  lastHighlighted = el;
+
+  // Highlight element
+  el.style.outline = "2px solid red";
+
+  // Update label
+  hoverLabel.innerText = buildTagLabel(el);
+  hoverLabel.style.left = (e.clientX + 10) + "px";
+  hoverLabel.style.top = (e.clientY + 10) + "px";
+  hoverLabel.style.display = "block";
+};
+------------------------------------
+window.__itafMouseOut = function (e) {
+  if (!window.__itafCaptureEnabled) return;
+
+  if (e.target === lastHighlighted) {
+    e.target.style.outline = "";
+    lastHighlighted = null;
+  }
+
+  if (hoverLabel) {
+    hoverLabel.style.display = "none";
+  }
+};
+--------------------------
+window.__itafMouseOut = function (e) {
+  if (!window.__itafCaptureEnabled) return;
+
+  if (e.target === lastHighlighted) {
+    e.target.style.outline = "";
+    lastHighlighted = null;
+  }
+
+  if (hoverLabel) {
+    hoverLabel.style.display = "none";
+  }
+};
