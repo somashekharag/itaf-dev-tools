@@ -23,25 +23,19 @@ function createHoverLabel() {
   document.body.appendChild(hoverLabel);
 }
 -----------------------
-let hoverLabel = null;
+function buildTagLabel(el) {
+  let label = `<${el.tagName.toLowerCase()}`;
 
-function createHoverLabel() {
-  if (hoverLabel) return;
+  if (el.id) {
+    label += ` id="${el.id}"`;
+  } else if (el.getAttribute("name")) {
+    label += ` name="${el.getAttribute("name")}"`;
+  }
 
-  hoverLabel = document.createElement("div");
-  hoverLabel.style.position = "fixed";
-  hoverLabel.style.zIndex = "999999";
-  hoverLabel.style.background = "#d32f2f";
-  hoverLabel.style.color = "#fff";
-  hoverLabel.style.padding = "2px 6px";
-  hoverLabel.style.fontSize = "12px";
-  hoverLabel.style.fontFamily = "monospace";
-  hoverLabel.style.borderRadius = "4px";
-  hoverLabel.style.pointerEvents = "none";
-  hoverLabel.style.display = "none";
-
-  document.body.appendChild(hoverLabel);
+  label += ">";
+  return label;
 }
+
 
 ---------------------------
 window.__itafMouseOver = function (e) {
