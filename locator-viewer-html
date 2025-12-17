@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ITAF Locator Viewer</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f7f7f7;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    th {
+      background: #f0f0f0;
+      text-align: left;
+    }
+
+    td pre {
+      margin: 0;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .edit-btn {
+      cursor: pointer;
+      color: #007bff;
+      text-decoration: underline;
+      font-size: 12px;
+    }
+
+    /* ---------- Modal ---------- */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      width: 350px;
+      border-radius: 6px;
+    }
+
+    .modal-content h3 {
+      margin-top: 0;
+    }
+
+    .modal-content input {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+    }
+
+    .modal-actions {
+      text-align: right;
+    }
+
+    button {
+      padding: 6px 12px;
+      margin-left: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2 id="pageTitle">Locator Viewer</h2>
+
+<table id="locatorTable">
+  <thead>
+    <tr>
+      <th>Element Name</th>
+      <th>Tag</th>
+      <th>Text</th>
+      <th>XPath</th>
+      <th>Attributes</th>
+      <th>Best Locator</th>
+      <th>Screenshot</th>
+      <th>Captured At</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<!-- ================= Modal ================= -->
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <h3>Edit Element Name</h3>
+    <input type="text" id="newElementName">
+    <div class="modal-actions">
+      <button onclick="closeModal()">Cancel</button>
+      <button onclick="saveElementName()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPage = null;
+let oldElementName = null;
+
+/* ================= Load Locators ================= */
+async function loadLocators(pageName) {
+  currentPage = pageName;
+
+  const res = await fetch(`/api/locators/${pageName}`);
+  const data = await res.json();
+
+  document.getElementById("pageTitle").innerText =
+    "Locator Viewer – " + data.pageName;
+
+  const tbody = document.querySelector("#locatorTable tbody");
+  tbody.innerHTML = "";
+
+  data.elements.forEach(el => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${escape(el.elementName)}</td>
+      <td>${escape(el.tag)}</td>
+      <td>${escape(el.text || "")}</td>
+      <td><pre>${escape(el.xpath || "")}</pre></td>
+      <td><pre>${escape(JSON.stringify(el.attributes, null, 2))}</pre></td>
+      <td>${escape(el.bestLocator)}</td>
+      <td>${el.screenshotPath
+        ? `<a href="${escape(el.screenshotPath)}" target="_blank">View</a>`
+        : ""}</td>
+      <td>${escape(el.capturedAt)}</td>
+      <td>
+        <span class="edit-btn"
+              onclick="openEditModal('${escape(el.elementName)}')">
+          Edit
+        </span>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+/* ================= Modal Logic ================= */
+function openEditModal(elementName) {
+  oldElementName = elementName;
+  document.getElementById("newElementName").value = elementName;
+  document.getElementById("editModal").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("editModal").style.display = "none";
+}
+
+async function saveElementName() {
+  const newName = document.getElementById("newElementName").value.trim();
+  if (!newName) return;
+
+  await fetch("/api/locators/update-element-name", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      pageName: currentPage,
+      oldElementName,
+      newElementName: newName
+    })
+  });
+
+  closeModal();
+  loadLocators(currentPage);
+}
+
+/* ================= Escape Helper ================= */
+function escape(value) {
+  if (!value) return "";
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/* ================= Initial Load ================= */
+loadLocators("LoginPage");
+</script>
+
+</body>
+</html>
