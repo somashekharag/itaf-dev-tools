@@ -74,11 +74,12 @@ window.__itafMouseOut = function (e) {
   }
 };
 --------------------------
-window.__itafMouseOut = function (e) {
-  if (!window.__itafCaptureEnabled) return;
+window.__itafDisableCapture = function () {
+  window.__itafCaptureEnabled = false;
+  detachListeners();
 
-  if (e.target === lastHighlighted) {
-    e.target.style.outline = "";
+  if (lastHighlighted) {
+    lastHighlighted.style.outline = "";
     lastHighlighted = null;
   }
 
@@ -86,3 +87,4 @@ window.__itafMouseOut = function (e) {
     hoverLabel.style.display = "none";
   }
 };
+
