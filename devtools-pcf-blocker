@@ -1,0 +1,66 @@
+package com.itaf.devtools.security;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import org.springframework.web.servlet.HandlerInterceptor;
+
+@Profile("itaf-devtools")
+@Component
+public class DevToolsAccessInterceptor implements HandlerInterceptor {
+
+    @Override
+    public boolean preHandle(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            Object handler) throws Exception {
+
+        // 🚫 Deny DevTools access on PCF
+        if (PcfEnvironmentDetector.isRunningOnPcf()) {
+            response.sendError(
+                HttpServletResponse.SC_FORBIDDEN,
+                "ITAF DevTools are disabled on PCF"
+            );
+            return false;
+        }
+
+        return true; // ✅ allow on local / non-PCF
+    }
+}
+
+
+-----------------------------------
+package com.itaf.devtools.config;
+
+import com.itaf.devtools.security.DevToolsAccessInterceptor;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+@Profile("itaf-devtools")
+@Configuration
+public class DevToolsWebConfig implements WebMvcConfigurer {
+
+    private final DevToolsAccessInterceptor interceptor;
+
+    public DevToolsWebConfig(DevToolsAccessInterceptor interceptor) {
+        this.interceptor = interceptor;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+
+        registry.addInterceptor(interceptor)
+                .addPathPatterns(
+                        "/devtools/**",
+                        "/api/capture/**",
+                        "/api/scan",
+                        "/api/locators/**"
+                );
+    }
+}
+
+
+  
