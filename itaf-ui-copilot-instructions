@@ -170,3 +170,86 @@ public void selectCountry(String country) {
       .byVisibleText(country)
       .finish();
 }
+
+
+-------------------------------
+
+End-to-End Fluent Execution Rules:
+
+Cucumber Step Design:
+- Copilot MUST generate end-to-end fluent chains inside a SINGLE step definition
+- Do NOT split actions into multiple cucumber steps unless explicitly asked
+- Each business flow must be represented as one cohesive fluent chain
+
+Example:
+- Login + navigation + selection → ONE @Given / @When step
+- Avoid atomic steps like "enter username", "click login button"
+
+Mandatory Style:
+- Use ui.doActions() once per flow
+- Chain all actions sequentially
+- End chain with .finish()
+
+Not Allowed:
+- Creating multiple step definitions for each UI action
+- Breaking a flow into Given / When / Then steps unless validations are required
+
+----------------------------------------
+
+Click Strategy Rules:
+
+Click Types:
+- Normal click → .click(locator).normal
+- JavaScript click → .click(locator).js
+
+Selection Rules:
+- Use JS click when:
+  - Element is known to be flaky
+  - Element is hidden / overlayed
+  - Login or submit buttons
+- Use normal click for:
+  - Navigation icons
+  - Cart icons
+  - Menu items
+
+Copilot must infer click type from context if not explicitly stated.
+
+-----------------------------
+E2E Mapping Rules:
+
+Manual test steps must be combined into logical end-to-end flows.
+
+Example:
+Login Page:
+1. launch application
+2. enter username
+3. enter password
+4. click login button
+
+Dashboard Page:
+1. select country
+
+Generated Automation:
+- Single cucumber step
+- Single fluent chain
+- Sequential actions
+
+--------------------------------
+@Given("user completes login and navigates to dashboard")
+public void userCompletesLoginAndNavigatesToDashboard() {
+
+    ui.doActions()
+        .open("<url>")
+        .type(loginPage.getUsername(), "standard_user")
+        .type(loginPage.getPassword(), "secret_sauce")
+        .click(loginPage.getLoginButton()).js
+        .select(checkoutPage.getCountySelect()).byVisibleText("India")
+        .click(cartPage.getCartIcon()).normal
+        .finish();
+}
+
+---------------------
+
+// End-to-end fluent chaining only
+// Do NOT split flow into multiple cucumber steps
+// Combine related manual steps into one ui.doActions() chain
