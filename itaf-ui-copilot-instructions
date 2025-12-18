@@ -1,0 +1,172 @@
+
+ITAF UI Inspector Guidelines:
+
+Locator Capture:
+- ITAF UI Inspector captures locators from the application under test.
+- Captured locators are stored under a configurable root directory.
+- Folder structure:
+  <locator-root>/
+    └── <PageName>/
+        └── locators.json
+
+Example:
+- LoginPage/locators.json
+- DashboardPage/locators.json
+
+Locator Usage Rules:
+- Each locators.json file contains all element definitions for that page.
+- Locator names must be used exactly as defined in locators.json.
+- Never hardcode XPath, CSS, id, or name values.
+- Always reference locators via Page Object getters.
+
+Page Object Generation:
+- Copilot is allowed to generate Page Objects by reading locators.json
+- Page Object class name must match folder name (e.g., LoginPage)
+- Each locator must have a getter method
+- Page Objects must not contain test logic, only element accessors
+
+Assumptions:
+- locators.json already exists for all referenced pages
+- Copilot must NOT create new locators
+
+-----------------------------------------
+
+ITAF Fluent API Rules:
+
+Default Automation Style:
+- Always generate automation using NextGen ITAF Fluent API
+- Fluent API is mandatory unless explicitly stated otherwise
+
+Fluent API Sources:
+- Fluent chaining methods are available in:
+  - ITAFFluentChain (click, type, select)
+  - ITAFFluentExpectation (toHaveText, toBeVisible)
+  - ITAFFluentCondition (isClickable, isEnabled)
+- Supporting utilities are available via itaf-dev-tools.jar
+  (ClickUtil, BrowserUtil, ScreenshotUtil, etc.)
+
+Usage Rules:
+- All UI interactions must go through ITAFUIActions
+- Always end fluent chain with .finish()
+- Prefer readable, business-aligned chaining
+
+Allowed:
+ui.doActions()
+   .type(locator, value)
+   .click(locator)
+   .select(locator).byVisibleText(value)
+   .finish();
+
+Not Allowed:
+- WebDriver usage
+- Selenium APIs
+- Thread.sleep
+- Direct waits
+---------------------------------
+Step Definition Rules:
+
+File & Class:
+- ALL Copilot-generated step definitions must go into:
+  CopilotStepDefinitions.java
+- Do NOT create additional step definition classes
+
+Constructor Rules:
+- Step definition class must follow dependency injection pattern
+- Use ITAFDriverFactory.getDriiver()
+- Initialize Page Objects in constructor
+- Initialize ITAFUIActions in constructor
+
+Example:
+public CopilotStepDefinitions(TestContext context) {
+    this.loginPage = new LoginPage(ITAFDriverFactory.getDriiver());
+    this.dashboardPage = new DashboardPage(ITAFDriverFactory.getDriiver());
+    this.ui = new ITAFUIActions(ITAFDriverFactory.getDriiver());
+}
+
+Reuse:
+- Prefer reusing existing steps
+- Avoid duplicate step definitions
+----------------------------------------------
+Manual Test Case Mapping Rules:
+
+Manual test cases are grouped by page name.
+
+Example:
+Login Page:
+  1. launch application
+  2. login page should be displayed (verify presence of username field)
+
+Dashboard Page:
+  1. verify user is on dashboard page (verify presence of profile icon)
+  2. Select value "India" from country dropdown
+
+Mapping Rules:
+- Page heading indicates Page Object to use
+- Each numbered step maps to one fluent action or assertion
+- Preserve original step order
+- Use presence of element for page validation
+
+Mapping Examples:
+- "launch application" → ui.doActions().open("<url>").finish()
+- "verify presence of X" → ui.expect(X).toBeVisible()
+- "enter username" → ui.doActions().type(loginPage.getUsername(), value)
+- "click login button" → ui.doActions().click(loginPage.getLoginButton())
+- "select value from dropdown" → ui.doActions().select(locator).byVisibleText(value)
+--------------------------------------------
+Output Expectations:
+
+- Generate:
+  1. Feature file (Gherkin)
+  2. Step definitions ONLY inside CopilotStepDefinitions.java
+  3. Page Objects only if missing and locators.json exists
+
+- Step definitions must:
+  - Use ITAF Fluent API
+  - Use Page Object getters
+  - Be readable and aligned with manual test steps
+-------------------------------------
+// ITAF Fluent API only
+// Locators come from ITAF UI Inspector (locators.json)
+// Do not use Selenium or WebDriver directly
+// Generate steps only in this class
+-------------------------------------
+Login Page:
+1. launch application
+2. login page should be displayed
+3. enter username
+4. enter password
+5. click login button
+
+Dashboard Page:
+1. verify user is on dashboard page
+2. Select value "India" from country dropdown
+
+@Given("user launches the application")
+public void launchApp() {
+    ui.doActions()
+      .open("<url>")
+      .finish();
+}
+
+@Then("login page should be displayed")
+public void verifyLoginPage() {
+    ui.expect(loginPage.getUsername())
+      .toBeVisible();
+}
+
+@When("user enters valid credentials")
+public void enterCredentials() {
+    ui.doActions()
+      .type(loginPage.getUsername(), "user")
+      .type(loginPage.getPassword(), "password")
+      .click(loginPage.getLoginButton())
+      .finish();
+}
+
+@Then("user selects country {string}")
+public void selectCountry(String country) {
+    ui.doActions()
+      .select(dashboardPage.getCountryDropdown())
+      .byVisibleText(country)
+      .finish();
+}
